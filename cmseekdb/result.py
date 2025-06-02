@@ -1,9 +1,14 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 import cmseekdb.basic as cmseek
+
+# For the enviroument that doesn't use utf8
+import sys
+import io
+sys.stdout = io.open(sys.stdout.fileno(), 'w', encoding='utf8')
 
 def target(target):
     ## initiate the result

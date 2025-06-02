@@ -1,10 +1,9 @@
 <p align='center'>
-  <img src="https://i.imgur.com/n2U6nVH.png" alt="Logo"> <br>
-  <a href="https://github.com/Tuhinshubhra/CMSeeK/releases/tag/v.1.1.1"><img src="https://img.shields.io/badge/Version-1.1.1-brightgreen.svg?style=style=flat-square" alt="version"></a>
+  <img src="https://i.imgur.com/5VYs1m2.png" alt="Logo"> <br>
+  <a href="https://github.com/Tuhinshubhra/CMSeeK/releases/tag/v.1.1.3"><img src="https://img.shields.io/badge/Version-1.1.3-brightgreen.svg?style=style=flat-square" alt="version"></a>
   <a href="https://github.com/Tuhinshubhra/CMSeeK/"><img src="https://img.shields.io/badge/python-3-orange.svg?style=style=flat-square" alt="Python Version"></a>
   <a href="https://github.com/Tuhinshubhra/CMSeeK/stargazers"><img src="https://img.shields.io/github/stars/Tuhinshubhra/CMSeeK.svg" alt="GitHub stars" /></a>
   <a href="https://github.com/Tuhinshubhra/CMSeeK/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Tuhinshubhra/CMSeeK.svg" alt="GitHub license" /></a>
-  <a href="https://inventory.rawsec.ml/tools.html#CMSeek"><img src="https://inventory.rawsec.ml/img/badges/Rawsec-inventoried-FF5050_flat.svg" alt="Rawsec's CyberSecurity Inventory" /></a>
   <a href="https://twitter.com/r3dhax0r"><img src="https://img.shields.io/twitter/url/https/github.com/Tuhinshubhra/CMSeeK.svg?style=social" alt="Twitter" /></a>
 </p>
 
@@ -13,6 +12,8 @@
 
 ## Release History
 ```
+- Version 1.1.3 [25-07-2020]
+- Version 1.1.2 [19-05-2019]
 - Version 1.1.1 [01-02-2019]
 - Version 1.1.0 [28-08-2018]
 - Version 1.0.9 [21-08-2018]
@@ -24,7 +25,7 @@
 
 ## Functions Of CMSeek:
 
-- Basic CMS Detection of over 155 CMS
+- Basic CMS Detection of over 180 CMS
 - Drupal version detection
 - Advanced Wordpress Scans
   - Detects Version
@@ -68,13 +69,23 @@ Help menu from the program:
 
 ```
 USAGE:
-       python3 cmseek.py (for a guided scanning) OR
+       python3 cmseek.py (for guided scanning) OR
        python3 cmseek.py [OPTIONS] <Target Specification>
 
 SPECIFING TARGET:
       -u URL, --url URL            Target Url
-      -l LIST, -list LIST          path of the file containing list of sites
-                                   for multi-site scan (comma separated)
+      -l LIST, --list LIST         Path of the file containing list of sites
+                                   for multi-site scan (comma separated or one-per-line)
+
+MANIPULATING SCAN:
+      -i cms, --ignore--cms cms    Specify which CMS IDs to skip in order to
+                                   avoid flase positive. separated by comma ","
+
+      --strict-cms cms             Checks target against a list of provided
+                                   CMS IDs. separated by comma ","
+
+      --skip-scanned               Skips target if it's CMS was previously detected.
+
 RE-DIRECT:
       --follow-redirect            Follows all/any redirect(s)
       --no-redirect                Skips all redirects and tests the input target(s)
@@ -94,6 +105,7 @@ VERSION & UPDATING:
 HELP & MISCELLANEOUS:
       -h, --help                   Show this help message and exit
       --clear-result               Delete all the scan result
+      --batch                      Never ask you to press enter after every site in a list is scanned
 
 EXAMPLE USAGE:
       python3 cmseek.py -u example.com                           # Scan example.com
@@ -117,10 +129,11 @@ CMSeek detects CMS via the following:
 - Generator meta tag
 - Page source code
 - robots.txt
+- Directory check
 
 ## Supported CMSs:
 
-CMSeeK currently can detect **157** CMS. Check the list here: [cmss.py](https://github.com/Tuhinshubhra/CMSeeK/blob/master/cmseekdb/cmss.py) file which is present in the `cmseekdb` directory.
+CMSeeK currently can detect **170+** CMS. Check the list here: [cmss.py](https://github.com/Tuhinshubhra/CMSeeK/blob/master/cmseekdb/cmss.py) file which is present in the `cmseekdb` directory.
 All the cmss are stored in the following way:
 ```
  cmsID = {
@@ -149,12 +162,12 @@ CMSeek has a modular bruteforce system meaning you can add your custom made brut
 
 3. Copy and paste the module in the `brutecms` directory under CMSeeK's directory
 
-4. Open CMSeeK and Rebuild Cache using `U` as the input in the first menu.
+4. Open CMSeeK and Rebuild Cache using `R` as the input in the first menu.
 
 5. If everything is done right you'll see something like this (refer to screenshot below) and your module will be listed in bruteforce menu the next time you open CMSeeK.
 
 <p align='center'>
-  <img alt="Cache Rebuild Screenshot" width="400px" src="https://i.imgur.com/2Brl7pl.png" />
+  <img alt="Cache Rebuild Screenshot" width="600px" src="https://i.imgur.com/yhdzTYr.png" />
 </p>
 
 ## Need More Reasons To Use CMSeeK?
@@ -166,11 +179,11 @@ Also you can try reading comments in the code those are pretty random and weird!
 ## Screenshots:
 
 <p align="center">
-  <img alt="Main Menu" width="600px" src="https://s8.postimg.cc/ha6754v6t/cmseek_-v_068.png" />
+  <img alt="Main Menu" src="https://i.imgur.com/Eij6QvX.png" />
   <br><em>Main Menu</em><br>
-  <img alt="Scan Result" width="600px" src="https://s8.postimg.cc/f6vrxg0it/result.png" />
+  <img alt="Scan Result" src="https://i.imgur.com/u0iyLdB.png" />
   <br><em>Scan Result</em><br>
-  <img alt="WordPress Scan Result" width="600px" src="https://i.imgur.com/CK4O1Yd.png" />
+  <img alt="WordPress Scan Result" src="https://i.imgur.com/cOtCJLj.png" />
   <br><em>WordPress Scan Result</em><br>
 </p>
 
@@ -194,7 +207,3 @@ CMSeeK is licensed under [GNU General Public License v3.0](https://github.com/Tu
 ## Follow Me @r3dhax0r:
 
 [Twitter](https://twitter.com/r3dhax0r)   
-
-## Team:
-
-[Team : Virtually Unvoid Defensive (VUD)](https://twitter.com/virtuallyunvoid)

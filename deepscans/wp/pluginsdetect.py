@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 import cmseekdb.basic as cmseek
 import re
@@ -9,7 +9,7 @@ import json
 
 def start(source):
     cmseek.info('Starting passive plugin enumeration')
-    plug_regex = re.compile('wp-content/plugins/(.*?)/.*?[css|js].*?ver=([0-9\.]*)')
+    plug_regex = re.compile('wp-content/plugins/([^/]+)/.+ver=([0-9\.]+)')
     results = plug_regex.findall(source)
     plugins = []
     found = 0

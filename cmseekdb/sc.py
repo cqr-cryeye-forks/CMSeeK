@@ -1,33 +1,35 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 # This file contains all the methods of detecting cms via Source Code
 # Version: 1.0.0
 # Return a list with ['1'/'0','ID of CMS'/'na'] 1 = detected 0 = not detected 2 = No Sourcecode Provided
 
 import re
+import cmseekdb.basic as cmseek
 
-def check(s, site): ## Check if no generator meta tag available
-    if s == "": ## No source code provided kinda shitty check but oh well
+def check(page_source_code, site): ## Check if no generator meta tag available
+    if page_source_code == "": ## No source code provided kinda shitty check but oh well
         return ['2', 'na']
     else: ## The real shit begins here
-        hstring = s
+        # hstring = s
         # harray = s.split("\n") ### Array conversion can use if needed later
 
-        detkeys = [
-        "/wp-content/:-wp",
+        page_source_detection_keys = [
+        "/wp-content/||/wp-include/:-wp",
         "/skin/frontend/||x-magento-init:-mg",
         "https://www.blogger.com/static/:-blg",
         "ic.pics.livejournal.com:-lj",
         "END: 3dcart stats:-tdc",
         "href=\"/apos-minified/:-apos",
         "href=\"/CatalystStyles/:-abc",
-        "src=\"/misc/drupal.js\":-dru",
+        "/misc/drupal.js:-dru",
         "css/joomla.css:-joom",
         "Powered By <a href=\"http://www.opencart.com\">OpenCart||\"catalog/view/javascript/jquery/swiper/css/opencart.css\"||index.php?route=:-oc",
         "/xoops.js||xoops_redirect:-xoops",
+	"tildacdn.com:-tilda",
         "Wolf Default RSS Feed:-wolf",
         "/ushahidi.js||alt=\"Ushahidi\":-ushahidi",
         "getWebguiProperty:-wgui",
@@ -38,18 +40,23 @@ def check(s, site): ## Check if no generator meta tag available
         "content=\"sNews:-snews",
         "/api/sitecore/:-score",
         "simsite/:-sim",
-        "simplebo.net/ ||\"pswp__:-spb",
+        "simplebo.net/:-spb",
         "/silvatheme:-silva",
         "serendipityQuickSearchTermField ||\"serendipity_||serendipity[:-spity",
         "Published by Seamless.CMS.WebUI:-slcms",
         "rock-config-trigger||rock-config-cancel-trigger:-rock",
         "/rcms-f-production.:-rcms",
         "CMS by Quick.Cms:-quick",
+        "Powered by Quick.Cart:-quick",
+        "DataLife Engine||dle_js.js:-dle",
+        "Roundcube Webmail||rcube_webmail:-rcube",
+        "bitrix||Bitrix:-bitrix", # your Captain Obvious
         "\"pimcore_:-pcore",
         "xmlns:perc||cm/css/perc_decoration.css:-percms",
         "PencilBlueController||\"pencilblueApp\":-pblue",
         "/libraries/ophal.js:-ophal",
         "Sitefinity/WebsiteTemplates:-sfy",
+        "assets.zyrosite.com:-zyro",
         "published by Open Text Web Solutions:-otwsm",
         "/opencms/export/:-ocms",
         "odoo.session_info||var odoo =:-odoo",
@@ -117,41 +124,59 @@ def check(s, site): ## Check if no generator meta tag available
         'de_epages.remotesearch.ui.suggest||require([[\'de_epages\':-epgs',
         'href="https://www.fortune3.com/en/siterate/rate.css":-for3',
         '<body class="gridlock shifter">::::<div class="shifter-page">:-btree',
-        'list-unstyled::::editable-zone:-pmoc'
+        'list-unstyled::::editable-zone:-pmoc',
+        '<!-- Demandware Analytics code||<!-- Demandware Apple Pay -->:-sfcc',
+        'icons__icons___XoCGh||styles__empty___3WCoC||icons__icon-phone___22Eum:-sazito',
+        'SHOPATRON-CRAWLER:-shopatron',
+        'Umbraco/||umbraco/:-umbraco',
+        'Sklep internetowy Shoper.pl:-shoper',
+        '//www.googletagmanager.com/ns.html?id=GTM-N2T2D3:-shopery',
+        'shopfa_license:-shopfa',
+        '/smjslib.js||/smartstore.core.js:-smartstore',
+        '_W.configDomain||Weebly.footer:-weebly',
+        'js/whmcs.js:-whmcs',
+        'OpenNeMaS CMS by Openhost||var u = "https://piwik.openhost.es/":-opennemas',
+        'zenid=||Congratulations! You have successfully installed your Zen Cart||Google Code for ZenCart Google||Powered by ZenCart||sideboxpzen-cart||stylesheet_zen_lightbox.css:-zencart',
+        'Redakční systém IPO||cdn.antee.cz/||ipo.min.js:-ipo',
+        'Built using HUGO:-hugo',
+        'This is Squarespace||End of Squarespace Headers:-squarespace'
         ]
 
-        for keyl in detkeys:
-            if ':-' in keyl:
-                det = keyl.split(':-')
-                if '||' in det[0]:
-                    idkwhat = det[0]
-                    dets = idkwhat.split('||')
-                    for d in dets:
-                        if d in hstring:
-                            return ['1', det[1]]
-                elif '::::' in det[0]:
-                    # yet again i know there can be a better way of doing it and feel free to correct it :)
-                    and_chk = '0' # 0 = neutral, 1 = passed, 2 = failed
-                    chks = det[0].split('::::')
-                    for chk in chks:
-                        if and_chk == '0' or and_chk == '1':
-                            if chk in hstring:
-                                and_chk = '1'
+        for detection_key in page_source_detection_keys:
+            if ':-' in detection_key:
+                detection_array = detection_key.split(':-')
+                if '||' in detection_array[0]:
+                    idkwhat = detection_array[0]
+                    detection_strings = idkwhat.split('||')
+                    for detection_string in detection_strings:
+                        if detection_string in page_source_code and detection_array[1] not in cmseek.ignore_cms: # check if the cms_id is not in the ignore list
+                            if cmseek.strict_cms == [] or detection_array[1] in cmseek.strict_cms:
+                                return ['1', detection_array[1]]
+                elif '::::' in detection_array[0]:
+                    # :::: is used when we want to check if both detection strings are present in the source code. 
+                    match_status = '0' # 0 = neutral, 1 = passed, 2 = failed
+                    match_strings = detection_array[0].split('::::')
+                    for match_string in match_strings:
+                        if match_status == '0' or match_status == '1':
+                            if match_string in page_source_code:
+                                match_status = '1'
                             else:
-                                and_chk = '2'
+                                match_status = '2'
                         else:
-                            and_chk = '2'
-                    if and_chk == '1':
-                        return ['1', det[1]]
+                            match_status = '2'
+                    if match_status == '1' and detection_array[1] not in cmseek.ignore_cms:
+                        if cmseek.strict_cms == [] or detection_array[1] in cmseek.strict_cms:
+                            return ['1', detection_array[1]]
                 else:
-                    if det[0] in hstring:
-                        return ['1', det[1]]
+                    if detection_array[0] in page_source_code and detection_array[1] not in cmseek.ignore_cms:
+                        if cmseek.strict_cms == [] or detection_array[1] in cmseek.strict_cms:
+                            return ['1', detection_array[1]]
 
         ####################################################
         #         REGEX DETECTIONS STARTS FROM HERE        #
         ####################################################
 
-        rgxkeys = [
+        page_source_detection_regex_keys = [
         '(\'|")https\://afosto\-cdn(.*?)\.afosto\.com(.*?)(\'|"):-afsto',
         'Powered by(.*?)JForum(.*?)\</a\>:-jf',
         'Powered by(.*?)AspNetForum(.*?)(\</a\>|\</span\>):-aspf',
@@ -199,24 +224,39 @@ def check(s, site): ## Check if no generator meta tag available
         '<script(.*?)/extension/iagutils/design/ezwebin/(.*?)</script>:-ezpub',
         'Powered by(.*?)Fortune3</a>:-for3',
         'Built on(.*?)bigtreecms.org(.*?)BigTree CMS:-btree',
-        'powered(.*?)opensolution.org(.*?)Sklep internetowy'
+        'powered(.*?)opensolution.org(.*?)Sklep internetowy',
+        'href\=(.*?)on/demandware.static:-sfcc',
+        'href\=(.*?)mediacdn.shopatron.com||href\=(.*?)cdn.shptrn.com:-shopatron',
+        'href\=(.*?)rwd_shoper(|_1):-shoper',
+        '(cdn|font).shopery.com/:-shopery',
+        'href\=(.*?)cdn.shopfa.com/||href\=(.*?)cdnfa.com/:-shopfa',
+        'id=("|\')(shopify-digital-wallet|shopify-features)||href\=(.*?)cdn.shopify.com/:-shopify',
+        'href\=(.*?)cdn.myshoptet.com/||content="Shoptet.sk"||var shoptet=:-shoptet',
+        'css/smartstore.(core|theme|modules).css:-smartstore',
+        'src=(.*?)spree/(products|brands)||Spree.(api_key|routes|translations):-spree',
+        'meta name\=("|\')brightspot.(contentId|cached)||href=("|\')brightspotcdn:-brightspot',
+        'amiro_sys_(css|js).php:-amiro',
+        'weebly-(footer|icon):-weebly',
+        '/ekmps/(scripts|css|assets|images|shops|designs)||globalstats.ekmsecure.com/hits/stats(-global).js:-ekmps',
+        'sf_(wrapper|footer|banner|subnavigation|pagetitle):-godaddywb',
+        'onm-(new|image|carousel|big|cropped):-opennemas',
+        'ipo(pagetext|mainframe|footer|menuwrapper|copyright|header|main|menu|statistics):-ipo'
         ]
-        # so here's the story, i've been watching hunter x hunter for last 2 weeks and i just finished it.
-        # In the following lines you'll find some weird variable names, those are characters from hxh.
-        # Thank you for reading this utterly useless comment.. now let's get back to work!
-        for hxh in rgxkeys:
-            if ':-' in hxh:
-                hunter = hxh.split(':-')
-                if '||' in hunter[0]:
-                    gon = hunter[0].split('||')
-                    for killua in gon:
-                        natero = re.search(killua, hstring, re.DOTALL)
-                        if natero != None:
-                            return ['1', hunter[1]]
+        for detection_key in page_source_detection_regex_keys:
+            if ':-' in detection_key:
+                detection_array = detection_key.split(':-')
+                if '||' in detection_array[0]:
+                    detection_regex_strings = detection_array[0].split('||')
+                    for detection_regex_string in detection_regex_strings:
+                        regex_match_status = re.search(detection_regex_string, page_source_code, re.DOTALL)
+                        if regex_match_status != None and detection_array[1] not in cmseek.ignore_cms:
+                            if cmseek.strict_cms == [] or detection_array[1] in cmseek.strict_cms:
+                                return ['1', detection_array[1]]
                 else:
-                    natero = re.search(hunter[0], hstring, re.DOTALL)
-                    if natero != None:
-                        return ['1', hunter[1]]
+                    regex_match_status = re.search(detection_array[0], page_source_code, re.DOTALL)
+                    if regex_match_status != None and detection_array[1] not in cmseek.ignore_cms:
+                        if cmseek.strict_cms == [] or detection_array[1] in cmseek.strict_cms:
+                            return ['1', detection_array[1]]
 
         else:
             # Failure

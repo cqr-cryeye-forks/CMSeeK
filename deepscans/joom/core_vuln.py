@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 import os
 import cmseekdb.basic as cmseek
@@ -13,8 +13,8 @@ def start(version):
             vuln_detection = '1' # version detection successful and vuln db loaded as well
             vuln_count = 0
             joom_vulns = []
-            f = open(vuln_file, 'r')
-            vuln_db = f.read()
+            with open(vuln_file, 'r') as f:
+                vuln_db = f.read()
             vulns = vuln_db.split('\n')
             for vuln in vulns:
                 if version in vuln:

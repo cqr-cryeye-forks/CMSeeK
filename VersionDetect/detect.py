@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
-def start(id, url, ua, ga, source, ga_content):
+def start(id, url, ua, ga, source, ga_content, headers):
     if id == "wp":
         # trust me more will be added soon
         import VersionDetect.wp as wpverdetect
@@ -249,3 +249,26 @@ def start(id, url, ua, ga, source, ga_content):
         import VersionDetect.rbsc as rbscverdetect
         rbscver = rbscverdetect.start(ga_content)
         return rbscver
+    elif id == 'oracle_atg':
+        import VersionDetect.atg as atgverdetect
+        atgver = atgverdetect.start(headers)
+        return atgver
+    elif id == 'umbraco':
+        import VersionDetect.umbraco as umbracoverdetect
+        umbracover = umbracoverdetect.start(headers, url, ua)
+        return umbracover
+    elif id == 'shopfa':
+        import VersionDetect.shopfa as shopfaverdetect
+        shopfaver = shopfaverdetect.start(ga_content, headers)
+        return shopfaver
+    elif id == 'amiro':
+        import VersionDetect.amiro as amiroverdetect
+        amirover = amiroverdetect.start(source)
+        return amirover
+    elif id == 'godaddywb':
+        import VersionDetect.godaddywb as godaddywbverdetect
+        godaddywb_version = godaddywbverdetect.start(ga_content)
+        return godaddywb_version
+    elif id == 'hugo':
+        import VersionDetect.hugo as hugodetect
+        return hugodetect.start(source)

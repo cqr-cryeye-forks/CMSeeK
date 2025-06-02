@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 ### Joomla Bruteforce module
 ### Version 1.3
 ### This thing took a whole freaking night to build... apperently i was dealing with the cookies in a not so "Wise" manner!
@@ -117,8 +117,8 @@ def start():
                 passfound = '0'
                 print('\n')
                 cmseek.info("Bruteforcing User: " + cmseek.bold + user + cmseek.cln)
-                pwd_file = open("wordlist/passwords.txt", "r")
-                passwords = pwd_file.read().split('\n')
+                with open("wordlist/passwords.txt", "r") as pwd_file:
+                    passwords = pwd_file.read().split('\n')
                 passwords.insert(0, user)
                 for password in passwords:
                     if password != '' and password != '\n':

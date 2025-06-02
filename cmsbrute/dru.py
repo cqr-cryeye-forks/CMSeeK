@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 ### Drupal Bruteforce module
 ### Version 1.0
 ### Honestly this is kinda useless as drupal blocks an account for some time after 5 failed attempt (maybe this is one fix in the next version!)
@@ -86,8 +86,8 @@ def start():
                 if user != '':
                     print('\n')
                     cmseek.info("Bruteforcing User: " + cmseek.bold + user + cmseek.cln)
-                    pwd_file = open("wordlist/passwords.txt", "r")
-                    passwords = pwd_file.read().split('\n')
+                    with open("wordlist/passwords.txt", "r") as pwd_file:
+                        passwords = pwd_file.read().split('\n')
                     passwords.insert(0, user)
                     passfound = '0'
                     for password in passwords:

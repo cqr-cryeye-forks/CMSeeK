@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 ### All WordPress DeepScan stuffs goes here
 
@@ -15,14 +15,38 @@ import deepscans.wp.pathdisc as path_disclosure
 import deepscans.wp.check_reg as check_reg
 import cmseekdb.result as sresult
 import time
+import re
+import os
 
-def start(id, url, ua, ga, source): ## ({ID of the cms}, {url of target}, {User Agent}, {is Generator Meta tag available [0/1]}, {Source code})
+def start(id, url, ua, ga, source, detection_method):
+    '''
+    id = ID of the cms
+    url = URL of target
+    ua = User Agent
+    ga = [0/1] is GENERATOR meta tag available
+    source = source code
+    '''
+
     ## Do shits later [update from later: i forgot what shit i had to do ;___;]
     if id == "wp":
         # referenced before assignment fix
         vulnss = version = wpvdbres = result = plugins_found = usernames = usernamesgen = '0'
 
         cmseek.statement('Starting WordPress DeepScan')
+
+
+        # Check if site really is WordPress
+        if detection_method == 'source':
+            # well most of the wordpress false positives are from source detections.
+            cmseek.statement('Checking if the detection is false positive')
+            #temp_domain = re.findall('^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)', url)[0]
+            #wp_match_pattern = temp_domain + '\/wp-(content|include|admin)\/'  # False Negative, because usually '/wp-content' without domain in source
+            if not re.search('\/wp-(content|include|admin)\/', source):
+                cmseek.error('Detection was false positive! CMSeeK is quitting!')
+                cmseek.success('Run CMSeeK with {0}{1}{2} argument next time'.format(cmseek.fgreen, '--ignore-cms wp', cmseek.cln))
+                #cmseek.handle_quit()
+                return
+
         # Version detection
         version = wordpress_version_detect.start(id, url, ua, ga, source)
 
@@ -105,9 +129,7 @@ def start(id, url, ua, ga, source): ## ({ID of the cms}, {url of target}, {User 
 
         ### Deep Scan Results comes here
         comptime = round(time.time() - cmseek.cstart, 2)
-        log_dir = cmseek.log_dir
-        if log_dir is not "":
-            log_file = log_dir + "/cms.json"
+        log_file = os.path.join(cmseek.log_dir, 'cms.json')
         cmseek.clearscreen()
         cmseek.banner("Deep Scan Results")
         sresult.target(url)
@@ -244,18 +266,19 @@ def start(id, url, ua, ga, source): ## ({ID of the cms}, {url of target}, {User 
             if wpvdbres == '1':
                 sresult.end_item('Version vulnerabilities: ' + cmseek.bold + cmseek.fgreen + str(vulnss) + cmseek.cln)
                 cmseek.update_log('wp_vuln_count', str(vulnss))
+                cmseek.update_log("wp_vulns", result, False)
                 if vulnss > 0:
                     for i,vuln in enumerate(result['vulnerabilities']):
                         if i == 0 and i != vulnss - 1:
                             sresult.empty_sub(False)
-                            sresult.init_sub(cmseek.bold + cmseek.fgreen + str(vuln['title']) + cmseek.cln, False)
-                            sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, True)
-                            sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, True)
+                            sresult.init_sub(cmseek.bold + cmseek.fgreen + str(vuln['name']) + cmseek.cln, False)
+                            # sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, True)
+                            # sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, True)
                             strvuln = str(vuln)
-                            if 'cve' in strvuln:
-                                for ref in vuln['references']['cve']:
-                                    sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + str(ref) + cmseek.cln, False, True)
+                            if vuln['cve'] != "":
+                                sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + vuln["cve"] + cmseek.cln, False, True)
 
+                            '''
                             if 'exploitdb' in strvuln:
                                 for ref in vuln['references']['exploitdb']:
                                     sresult.subsub("ExploitDB Link: " + cmseek.fgreen + "http://www.exploit-db.com/exploits/" + str(ref) + cmseek.cln, False, True)
@@ -271,72 +294,42 @@ def start(id, url, ua, ga, source): ## ({ID of the cms}, {url of target}, {User 
                             if 'secunia' in strvuln:
                                 for ref in vuln['references']['secunia']:
                                     sresult.subsub("Secunia Advisory: " + cmseek.fgreen + "http://secunia.com/advisories/" + str(ref) + cmseek.cln, False, True)
-
+                            
                             if 'url' in strvuln:
                                 for ref in vuln['references']['url']:
                                     sresult.subsub("Reference: " + cmseek.fgreen + str(ref) + cmseek.cln, False, True)
-
+                            '''
+                            if vuln["references"] != []:
+                                for ref in vuln["references"]:
+                                    sresult.subsub("Reference: " + cmseek.fgreen + str(ref) + cmseek.cln, False, True)
                             sresult.end_subsub("Fixed In Version: " + cmseek.bold + cmseek.fgreen + str(vuln['fixed_in']) + cmseek.cln, False, True)
 
                         elif i == vulnss - 1:
                             sresult.empty_sub(False)
-                            sresult.end_sub(cmseek.bold + cmseek.fgreen + str(vuln['title']) + cmseek.cln, False)
-                            sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, False)
-                            sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, False)
+                            sresult.end_sub(cmseek.bold + cmseek.fgreen + str(vuln['name']) + cmseek.cln, False)
+                            # sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, False)
+                            # sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, False)
                             strvuln = str(vuln)
-                            if 'cve' in strvuln:
-                                for ref in vuln['references']['cve']:
-                                    sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + str(ref) + cmseek.cln, False, False)
+                            if vuln['cve'] != "":
+                                sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + vuln["cve"] + cmseek.cln, False, False)
 
-                            if 'exploitdb' in strvuln:
-                                for ref in vuln['references']['exploitdb']:
-                                    sresult.subsub("ExploitDB Link: " + cmseek.fgreen + "http://www.exploit-db.com/exploits/" + str(ref) + cmseek.cln, False, False)
-
-                            if 'metasploit' in strvuln:
-                                for ref in vuln['references']['metasploit']:
-                                    sresult.subsub("Metasploit Module: " + cmseek.fgreen + "http://www.metasploit.com/modules/" + str(ref) + cmseek.cln, False, False)
-
-                            if 'osvdb' in strvuln:
-                                for ref in vuln['references']['osvdb']:
-                                    sresult.subsub("OSVDB Link: " + cmseek.fgreen + "http://osvdb.org/" + str(ref) + cmseek.cln, False, False)
-
-                            if 'secunia' in strvuln:
-                                for ref in vuln['references']['secunia']:
-                                    sresult.subsub("Secunia Advisory: " + cmseek.fgreen + "http://secunia.com/advisories/" + str(ref) + cmseek.cln, False, False)
-
-                            if 'url' in strvuln:
-                                for ref in vuln['references']['url']:
+                            if vuln["references"] != []:
+                                for ref in vuln["references"]:
                                     sresult.subsub("Reference: " + cmseek.fgreen + str(ref) + cmseek.cln, False, False)
 
                             sresult.end_subsub("Fixed In Version: " + cmseek.bold + cmseek.fgreen + str(vuln['fixed_in']) + cmseek.cln, False, False)
                         else:
                             sresult.empty_sub(False)
-                            sresult.sub_item(cmseek.bold + cmseek.fgreen + str(vuln['title']) + cmseek.cln, False)
-                            sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, True)
-                            sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, True)
+                            sresult.sub_item(cmseek.bold + cmseek.fgreen + str(vuln['name']) + cmseek.cln, False)
+                            #sresult.init_subsub("Type: " + cmseek.bold + cmseek.fgreen + str(vuln['vuln_type']) + cmseek.cln, False, True)
+                            #sresult.subsub("Link: " + cmseek.bold + cmseek.fgreen + "http://wpvulndb.com/vulnerabilities/" + str(vuln['id']) + cmseek.cln, False, True)
                             strvuln = str(vuln)
-                            if 'cve' in strvuln:
-                                for ref in vuln['references']['cve']:
-                                    sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + str(ref) + cmseek.cln, False, True)
+                            if vuln['cve'] != "":
+                                sresult.subsub("CVE: " + cmseek.fgreen + "http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-" + str(ref) + cmseek.cln, False, True)
+                                    
 
-                            if 'exploitdb' in strvuln:
-                                for ref in vuln['references']['exploitdb']:
-                                    sresult.subsub("ExploitDB Link: " + cmseek.fgreen + "http://www.exploit-db.com/exploits/" + str(ref) + cmseek.cln, False, True)
-
-                            if 'metasploit' in strvuln:
-                                for ref in vuln['references']['metasploit']:
-                                    sresult.subsub("Metasploit Module: " + cmseek.fgreen + "http://www.metasploit.com/modules/" + str(ref) + cmseek.cln, False, True)
-
-                            if 'osvdb' in strvuln:
-                                for ref in vuln['references']['osvdb']:
-                                    sresult.subsub("OSVDB Link: " + cmseek.fgreen + "http://osvdb.org/" + str(ref) + cmseek.cln, False, True)
-
-                            if 'secunia' in strvuln:
-                                for ref in vuln['references']['secunia']:
-                                    sresult.subsub("Secunia Advisory: " + cmseek.fgreen + "http://secunia.com/advisories/" + str(ref) + cmseek.cln, False, True)
-
-                            if 'url' in strvuln:
-                                for ref in vuln['references']['url']:
+                            if vuln["references"] != []:
+                                for ref in vuln["references"]:
                                     sresult.subsub("Reference: " + cmseek.fgreen + str(ref) + cmseek.cln, False, True)
 
                             sresult.end_subsub("Fixed In Version: " + cmseek.bold + cmseek.fgreen + str(vuln['fixed_in']) + cmseek.cln, False, True)

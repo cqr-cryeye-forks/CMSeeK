@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 
 # This file contains the list of cmss supported by CMSeeK in the following structure
 # ExampleCMS = {
@@ -18,6 +18,13 @@ wp = {
     'url':'https://wordpress.org',
     'vd':'1',
     'deeps':'1'
+}
+
+tilda = {
+    'name':'Tilda CMS',
+    'url':'https://tilda.cc/',
+    'vd':'0',
+    'deeps':'0'
 }
 
 mg = {
@@ -80,6 +87,13 @@ dru = {
     'name':'Drupal',
     'url':'https://drupal.org',
     'vd':'1',
+    'deeps':'0'
+}
+
+zyro = {
+    'name':'Zyro',
+    'url':'https://zyro.com/',
+    'vd':'0',
     'deeps':'0'
 }
 
@@ -285,10 +299,22 @@ silva = {
     'vd':'0',
     'deeps':'0'
 }
+dle = {
+    'name':'DataLife Engine',
+    'url':'https://dle-news.com',
+    'vd':'0',
+    'deeps':'0'
+}
 spity = {
     'name':'Serendipity',
     'url':'https://docs.s9y.org/',
     'vd':'1',
+    'deeps':'0'
+}
+rcube = {
+    'name':'RoundCube Webmail',
+    'url':'https://roundcube.net/',
+    'vd':'0',
     'deeps':'0'
 }
 slcms = {
@@ -896,7 +922,7 @@ cmshop = {
 oracle_atg = {
     'name': 'Oracle ATG Web Commerce',
     'url': 'http://www.oracle.com/us/products/applications/atg/web-commerce/web-commerce-search-330138.html',
-    'vd': '0',
+    'vd': '1',
     'deeps': '0'
 }
 
@@ -1030,5 +1056,173 @@ rbsc = {
     'name':'RBS Change',
     'url':'https://www.rbschange.fr/',
     'vd':'1',
+    'deeps':'0'
+}
+
+sfcc = {
+    'name':'Salesforce Commerce Cloud',
+    'url':'https://demandware.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+sazito = {
+    'name':'Sazito',
+    'url':'https://sazito.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+shopatron = {
+    'name':'Shopatron',
+    'url':'https://www.shopatron.com',
+    'vd':'0',
+    'deeps':'0'
+}
+
+umbraco = {
+    'name':'Umbraco',
+    'url':'https://umbraco.com',
+    'vd':'1',
+    'deeps':'1'
+}
+
+shoper = {
+    'name':'Shoper',
+    'url':'https://www.shoper.pl',
+    'vd':'0',
+    'deeps':'0'
+}
+
+shopery = {
+    'name':'Shopery',
+    'url':'https://shopery.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+shopfa = {
+    'name':'ShopFA',
+    'url':'https://shopfa.com/',
+    'vd':'1',
+    'deeps':'0'
+}
+
+shopify = {
+    'name':'Shopify',
+    'url':'https://www.shopify.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+shoptet = {
+    'name':'Shoptet',
+    'url':'https://www.shoptet.cz/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+smartstore = {
+    'name':'Smartstore',
+    'url':'https://www.smartstore.com',
+    'vd':'0',
+    'deeps':'0'
+}
+
+solusquare = {
+    'name':'Solusquare Commerce Cloud',
+    'url':'https://www.solusquare.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+spree = {
+    'name':'Spree',
+    'url':'https://spreecommerce.org/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+bitrix = {
+    'name':'Bitrix',
+    'url':'https://www.1c-bitrix.ru',
+    'vd':'0',
+    'deeps':'0'
+}
+
+brightspot = {
+    'name':'Brightspot CMS',
+    'url':'https://www.brightspot.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+amiro = {
+    'name':'Amiro.CMS',
+    'url':'https://www.amiro.ru',
+    'vd':'1',
+    'deeps':'0'
+}
+
+weebly = {
+    'name':'Weebly',
+    'url':'https://www.weebly.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+ekmps = {
+    'name':'ekmPowershop',
+    'url':'https://www.ekm.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+godaddywb = {
+    'name':'GoDaddy Website Builder',
+    'url':'https://godaddy.com/websites/website-builder',
+    'vd':'1',
+    'deeps':'0'
+}
+
+whmcs = {
+    'name':'WHMCS',
+    'url':'https://www.whmcs.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+opennemas = {
+    'name':'OpenNemas CMS',
+    'url':'https://www.opennemas.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+zencart = {
+    'name':'Zen Cart CMS',
+    'url':'https://www.zen-cart.com/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+ipo = {
+    'name':'IPO CMS',
+    'url':'https://www.antee.cz/',
+    'vd':'0',
+    'deeps':'0'
+}
+
+hugo = {
+    'name':'Hugo',
+    'url':'https://gohugo.io/',
+    'vd':'1',
+    'deeps':'0'
+}
+
+squarespace = {
+    'name':'Squarespace',
+    'url':'https://www.squarespace.com/',
+    'vd':'0',
     'deeps':'0'
 }

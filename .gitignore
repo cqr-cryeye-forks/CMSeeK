@@ -4,3 +4,5 @@ __pycache__/
 Result/**
 .idea/
 .scan_id
+reports.json
+test.py

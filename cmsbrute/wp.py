@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 ### WordPress Bruteforce module
 ### Version 1.0
 ### cmseekbruteforcemodule <- make sure you include this comment in any custom modules you create so that cmseek can recognize it as a part of it's module
@@ -66,8 +66,8 @@ def start():
                 passfound = '0'
                 print('\n')
                 cmseek.info("Bruteforcing User: " + cmseek.bold + user + cmseek.cln)
-                pwd_file = open("wordlist/passwords.txt", "r")
-                passwords = pwd_file.read().split('\n')
+                with open("wordlist/passwords.txt", "r") as pwd_file:
+                    passwords = pwd_file.read().split('\n')
                 passwords.insert(0, user)
                 for password in passwords:
                     if password != '' and password != '\n':

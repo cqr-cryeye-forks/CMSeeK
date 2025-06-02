@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # This is a part of CMSeeK, check the LICENSE file for more information
-# Copyright (c) 2018 - 2019 Tuhinshubhra
+# Copyright (c) 2018 - 2020 Tuhinshubhra
 # Thought this file was getting quite bloated so refectored it
 
 import errno
@@ -20,10 +20,17 @@ import re
 from cmseekdb.getsource import *
 from cmseekdb.config import *
 
-cmseek_dir = os.path.dirname(os.path.abspath(__file__)).replace('/cmseekdb','')
+cmseek_dir = os.path.dirname(os.path.abspath(__file__)).replace('cmseekdb','')[:-1]    
 total_requests = 0
 cstart = time.time()
 redirect_conf = '0' # 0 = prompt for redirect, 1 = follow redirect, 2 = do not follow any redirect
+batch_mode = False # When set to true cmseek won't ask you to press enter after every site in a list is scanned
+ignore_cms = [] # add cms id that you want to skip
+strict_cms = [] # add cms ids that you want to detect.. no other cmses will be detected when any id is provided.
+report_index = {} # Contains previous scan results
+skip_scanned = False # When set to true CMSeeK witll ignore target whose CMS had been previously detected!
+light_scan = False # When enabled, we don't perform deep-scan only detect CMS and version.
+only_cms = False # When enabled, we just detect the CMS no version or deepscan is performed.
 
 # all the color codes goes here
 white = "\033[97m"
@@ -51,14 +58,36 @@ grey = "\033[37m";
 cyan = "\033[36m";
 bold   = "\033[1m";
 
+# access_directory
+if access_directory == "" or not os.path.exists(access_directory):
+    # no custom path provided or the path provided is wrong!
+    # show a warning if the case is wrong path
+    if not os.path.exists(access_directory) and access_directory != "":
+        if verbose:
+            print(bold + yellow + "[!] " + cln + "Invalid access_directory! falling back to default")
+
+    if os.access(cmseek_dir, os.W_OK):
+        # use the parent CMSeeK directory if it is writeable
+        access_directory = cmseek_dir
+    else:
+        if cmseek_dir == os.getcwd():
+            # current directory and cmseek directory are same and write access not available. show error if --batch is not used
+            if not batch_mode:
+                input(bold + red + "[x] " + "No write access in current directory, Reports will not be saved! [ENTER to continue]" + cln)
+
+            access_directory = cmseek_dir
+        else:
+            # current directory is different
+            access_directory = os.getcwd()
+
 def banner (txt):
     # The sexy banner!!!
     global cmseek_version
     print(bold + fgreen + """
-{1}_{5}___ _  _ {1}__{5}__ ____ {1}____{5} _  {1}_{5}
+{1} {5}___ _  _ {1}__{5}__ ____ {1}____{5} _  {1}_{5}
 |    |{1}\/{5}| {1}[{5}__  {1}|{5}___ |{1}___{5} |{1}_{5}/  {0}by {4}@r3dhax0r{5}
-{1}|{5}_{1}__{5} |  | ___{1}|{5} |{1}___{5} {1}|{5}___ {1}|{5} \{1}_{5} {2}Version {3}{1} Emporium
-""".format(orange, orange, yellow, cmseek_version, red, white))
+{1}|{5}_{1}__{5} |  | ___{1}|{5} |{1}___{5} {1}|{5}___ {1}|{5} \{1}_{5} {2}Version {3}{1} K-RONA
+""".format(orange, lblue, yellow, cmseek_version, red, white))
     if txt != "":
         print(whitebg + black + bold)
         print(" [+]  " + txt + "  [+] " + cln)
@@ -81,8 +110,22 @@ USAGE:
 
 SPECIFING TARGET:
       -u URL, --url URL            Target Url
-      -l LIST, -list LIST          path of the file containing list of sites
-                                   for multi-site scan (comma separated)
+      -l LIST, --list LIST         Path of the file containing list of sites
+                                   for multi-site scan (comma separated or one-per-line)
+
+MANIPULATING SCAN:
+      -i cms, --ignore--cms cms    Specify which CMS IDs to skip in order to
+                                   avoid flase positive. separated by comma ","
+
+      --strict-cms cms             Checks target against a list of provided
+                                   CMS IDs. separated by comma ","
+
+      --skip-scanned               Skips target if it's CMS was previously detected.
+
+      --light-scan                 Skips Deep Scan. Does CMS and version detection only.
+
+      -o, --only-cms               Only detect CMS, ignore deep scan and version detection.
+
 RE-DIRECT:
       --follow-redirect            Follows all/any redirect(s)
       --no-redirect                Skips all redirects and tests the input target(s)
@@ -102,6 +145,7 @@ VERSION & UPDATING:
 HELP & MISCELLANEOUS:
       -h, --help                   Show this help message and exit
       --clear-result               Delete all the scan result
+      --batch                      Never ask you to press enter after every site in a list is scanned
 
 EXAMPLE USAGE:
       python3 cmseek.py -u example.com                           # Scan example.com
@@ -208,20 +252,21 @@ def init_result_dir(url):
         url = list(url)
         url[-1] = ""
         url = "".join(url)
-    tor = {'/','!','?','#','@','&','%','\\','*'}
+    tor = {'/','!','?','#','@','&','%','\\','*', ':'}
     for r in tor:
         url = url.replace(r, '_')
 
+    
+    global access_directory
+    result_dir = os.path.join(access_directory, "Result", url)
+    json_log = os.path.join(result_dir, 'cms.json')
+
     ## check if the log directory exist
-    global cmseek_dir
-    result_dir = cmseek_dir + "/Result/" + url
-    json_log = result_dir + '/cms.json'
     if not os.path.isdir(result_dir):
         try:
             os.makedirs(result_dir)
-            f = open(json_log,"w+")
-            f.write("")
-            f.close()
+            with open(json_log,"w+") as f:
+                f.write("")
             # print('directory created')
         except OSError as exc: # Guard against race condition
             if exc.errno != errno.EEXIST:
@@ -229,38 +274,36 @@ def init_result_dir(url):
     else:
         # Directory exists, check for json log
         if not os.path.isfile(json_log):
-            f = open(json_log,"w+")
-            f.write("")
-            f.close()
+            with open(json_log,"w+") as f:
+                f.write("")
         else:
             # read log and save it to a variable
-            f = open(json_log,"r")
-            log_cont = f.read()
+            with open(json_log,"r") as f:
+                log_cont = f.read()
             if log_cont != "":
                 try:
                     global log
                     log = log_cont
                 except ValueError:
                     # invalid json file... clear it i guess
-                    f = open(json_log,"w+")
-                    f.write("")
-                    f.close()
+                    with open(json_log,"w+") as f:
+                        f.write("")
     global log_dir
     log_dir = result_dir
     update_log('last_scanned', str(datetime.now()))
 
 
-def update_log(key,value):
+def update_log(key, value, _isString=True):
     if key != "":
         global log
         a = json.loads(log)
-        a[key] = str(value)
+        a[key] = str(value) if _isString else value
         log = json.JSONEncoder().encode(a)
 
 def clear_log():
     # Clear Result directory
-    global cmseek_dir
-    resdir = cmseek_dir + '/Result'
+    global access_directory
+    resdir = os.path.join(access_directory, 'Result')
     if os.path.isdir(resdir):
         shutil.rmtree(resdir)
         os.makedirs(resdir)
@@ -273,29 +316,28 @@ def clear_log():
 def handle_quit(end_prog = True):
     # in case of unwanted exit this function should take care of writing the json log
     global log_dir
-    if log_dir is not "":
-        log_file = log_dir + "/cms.json"
+    if log_dir != "":
+        log_file = os.path.join(log_dir, 'cms.json')
         # print(log_file)
         global log
-        f = open(log_file,"w+")
-        json_l = json.loads(log)
-        log_to_write = json.dumps(json_l, sort_keys=True, indent=4)
-        f.write(log_to_write)
+        with open(log_file,"w+") as f:
+            json_l = json.loads(log)
+            log_to_write = json.dumps(json_l, sort_keys=True, indent=4)
+            f.write(log_to_write)
         # print('written: ' + log)
-        f.close()
         print('\n')
         # info('Log saved in: ' + fgreen + bold + log_file + cln)
     if end_prog == True:
         bye()
     else:
-        log = '{"url":"","last_scanned":"","detection_param":"","cms_id":"","cms_name":"","cms_url":""}'
+        log = '{"url":"","last_scanned":"","detection_param":"","cms_id":"","cms_name":"","cms_url":"","target_url":""}'
 
 def update_brute_cache():
     clearscreen()
     banner("Updating Bruteforce Cache")
     global cmseek_dir
-    brute_dir = cmseek_dir + "/cmsbrute"
-    brute_cache = brute_dir + '/cache.json'
+    brute_dir = os.path.join(cmseek_dir, "cmsbrute")
+    brute_cache = os.path.join(brute_dir, 'cache.json')
     cache_json = {}
     if not os.path.isdir(brute_dir):
         try:
@@ -311,8 +353,8 @@ def update_brute_cache():
     modulen = []
     for f in py_files:
         if f.endswith('.py') and f != '__init__.py':
-            fo = open(brute_dir + '/' + f, 'r')
-            mod_cnt = fo.read()
+            with open(os.path.join(brute_dir, f), 'r') as fo:
+                mod_cnt = fo.read()
             if 'cmseekbruteforcemodule' in mod_cnt and 'Bruteforce module' in mod_cnt:
                 n = []
                 n = re.findall(r'\# (.*?) Bruteforce module', mod_cnt)
@@ -324,9 +366,8 @@ def update_brute_cache():
         for index,module in enumerate(modules):
             module = module.replace('.py','')
             cache_json[module] = modulen[index]
-        tuh = open(brute_cache, 'w+')
-        tuh.write(json.dumps(cache_json))
-        tuh.close()
+        with open(brute_cache, 'w+') as tuh:
+            tuh.write(json.dumps(cache_json))
         success('The following modules has been added to the cache: \n')
         for ma in cache_json:
             print('> ' + bold + ma + '.py ' + cln + '--->   ' + bold + cache_json[ma] + cln + ' Bruteforce Module')
@@ -368,15 +409,15 @@ def update():
                 succes = False
                 try:
                     global cmseek_dir
-                    lock_file = cmseek_dir + "/.git/index.lock"
+                    lock_file = os.path.join(cmseek_dir, "/.git/index.lock")
                     if os.path.isfile(lock_file):
                         statement("Removing index.lock file from .git directory")
                         # Solve the index.lock issue
                         os.remove(lock_file)
                     subprocess.run(("git checkout . && git pull %s HEAD") % GIT_URL, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                     #os.system("git checkout . && git pull %s HEAD" % GIT_URL)
-                    vt = open('current_version', 'r')
-                    v_test = int(vt.read().replace('\n','').replace('.',''))
+                    with open('current_version', 'r') as vt:
+                        v_test = int(vt.read().replace('\n','').replace('.',''))
                     # print(v_test)
                     # print(serv_version)
                     if v_test == serv_version:
@@ -401,26 +442,28 @@ def savebrute(url,adminurl,username,password):
     # write the results to a result file
     if url != "" and adminurl != "" and username != "" and password != "":
         global log_dir
-        brute_file = log_dir + '/bruteforce_result_' + username + '_.txt'
-        old_file = log_dir + '/bruteforce_result_' + username + '_.old.txt'
+        brute_file = os.path.join(log_dir, 'bruteforce_result_' + username + '_.txt')
+        old_file = os.path.join(log_dir, 'bruteforce_result_' + username + '_.old.txt')
         brute_result = "### CMSeeK Bruteforce Result\n\n\nSite: " + url + "\n\nLogin URL: " + adminurl + "\n\nUsername: " + username + "\n\nPassword: " + password
         print('\n\n') # Pretty sloppy move there ;-;
         if not os.path.isfile(brute_file):
             # No previous bruteforce result file Found
-            f = open(brute_file, 'w+')
-            f.write(brute_result)
-            f.close()
+            with open(brute_file, 'w+') as f:
+                f.write(brute_result)
             success('Credentials stored at: ' + bold + brute_file + cln)
         else:
             os.rename(brute_file, old_file)
             info("Old result file found and moved to: " + old_file)
-            f = open(brute_file, 'w+')
-            f.write(brute_result)
-            f.close()
+            with open(brute_file, 'w+') as f:
+                f.write(brute_result)
             success('New credentials stored at: ' + bold + brute_file + cln)
 
 
-def getsource(url, ua): ## (url, useragent) return type: ({0/1/2},{error/source code/error}, {empty/http headers/empty})
+def getsource(url, ua):
+    '''
+    (url, useragent)
+    return type: [(0/1/2), (error/source code/error), (empty/http headers/empty)]
+    '''
     raw_source = getrawsource(url, ua)
     global total_requests
     total_requests += 1
@@ -469,7 +512,8 @@ def check_url(url,ua):
     try:
         urllib.request.urlopen(request)
         return '1'
-    except urllib.request.HTTPError:
+    except Exception as e:
+        error(str(e))
         return '0'
 
 def wpbrutesrc(url, user, pwd):

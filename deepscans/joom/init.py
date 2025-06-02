@@ -85,7 +85,7 @@ def start(id, url, ua, ga, source):
 
     if version != '0':
         cmseek.result("Joomla Version: ", version)
-        cmseek.update_log('joomla_version', version)
+        cmseek.update_log('version', version)
 
     if registration[0] == '1':
         cmseek.result('User registration enabled: ', registration[1])
@@ -93,13 +93,13 @@ def start(id, url, ua, ga, source):
 
     if debug_mode =='1':
         cmseek.result('Debug mode enabled', '')
-        cmseek.update_log('joomla_debug_mode', 'enabled')
+        cmseek.update_log('debug_mode', 'enabled')
     else:
-        cmseek.update_log('joomla_debug_mode', 'disabled')
+        cmseek.update_log('debug_mode', 'disabled')
 
     if readmefile == '1':
         cmseek.result('Readme file: ', url + '/README.txt')
-        cmseek.update_log('joomla_readme_file', url + '/README.txt')
+        cmseek.update_log('readme_file', url + '/README.txt')
 
     if admin[0] > 0:
         cmseek.result('Admin URL: ', url + admin[1][0])
@@ -107,7 +107,7 @@ def start(id, url, ua, ga, source):
         for adm in admin[1]:
             admin_log += url + '/' + adm + ','
             # print(cmseek.bold + cmseek.fgreen + "   [B] " + cmseek.cln + url + '/' + adm)
-        cmseek.update_log('joomla_admin_url', admin_log)
+        cmseek.update_log('admin_url', admin_log)
         print('\n')
 
     if directories[0] > 0:
@@ -127,7 +127,7 @@ def start(id, url, ua, ga, source):
         for backup in backups[1]:
             bkup_log.append(url + '/' + backup)
             print(cmseek.bold + cmseek.fgreen + "   [B] " + cmseek.cln + url + '/' + backup)
-        cmseek.update_log('joomla_backup_files', bkup_log, False)
+        cmseek.update_log('backup_files', bkup_log, False)
         print('\n')
 
     if configs[0] > 0:
@@ -137,13 +137,13 @@ def start(id, url, ua, ga, source):
         for config in configs[1]:
             conf_log += url + '/' + config + ','
             print(cmseek.bold + cmseek.fgreen + "   [c] " + cmseek.cln + url + '/' + config)
-        cmseek.update_log('joomla_config_files', conf_log)
+        cmseek.update_log('config_files', conf_log)
         print('\n')
 
     if vuln_detection == '1' and vuln_count > 0:
         cmseek.result('Total joomla core vulnerabilities: ', str(vuln_count))
         cmseek.update_log("vulnerabilities_count", vuln_count)
-        joomla_vulns_to_log = []
+        vulns_to_log = []
         cmseek.info('Vulnerabilities found: \n')
         for vuln in joom_vulns:
             # prepare the vuln details to be added to the log
@@ -154,11 +154,11 @@ def start(id, url, ua, ga, source):
                 if _index != 0:
                     _vulnRefs.append(_vr)
             
-            joomla_vulns_to_log.append({"name": _vulnName, "references": _vulnRefs})
+            vulns_to_log.append({"name": _vulnName, "references": _vulnRefs})
             vuln = vuln.replace('\\n', cmseek.cln + '\n    ')
             print(cmseek.bold + cmseek.red + '[v] ' + vuln)
             print('\n')
-        cmseek.update_log("vulnerabilities", joomla_vulns_to_log, False)
+        cmseek.update_log("vulnerabilities", vulns_to_log, False)
     elif vuln_detection == '2':
         cmseek.update_log("vulnerabilities_count", 0)
         cmseek.warning('Couldn\'t find core vulnerabilities, No VERSION detected')

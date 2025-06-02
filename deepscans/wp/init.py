@@ -7,10 +7,10 @@
 
 import cmseekdb.basic as cmseek ## Good old module
 import VersionDetect.wp as wordpress_version_detect
-import deepscans.wp.userenum as wp_user_enum
-import deepscans.wp.vuln as wp_vuln_scan
-import deepscans.wp.pluginsdetect as wp_plugins_enum
-import deepscans.wp.themedetect as wp_theme_enum
+import deepscans.wp.userenum as user_enum
+import deepscans.wp.vuln as vuln_scan
+import deepscans.wp.pluginsdetect as plugins_enum
+import deepscans.wp.themedetect as theme_enum
 import deepscans.wp.pathdisc as path_disclosure
 import deepscans.wp.check_reg as check_reg
 import cmseekdb.result as sresult
@@ -40,7 +40,7 @@ def start(id, url, ua, ga, source, detection_method):
             # well most of the wordpress false positives are from source detections.
             cmseek.statement('Checking if the detection is false positive')
             #temp_domain = re.findall('^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n\?\=]+)', url)[0]
-            #wp_match_pattern = temp_domain + '\/wp-(content|include|admin)\/'  # False Negative, because usually '/wp-content' without domain in source
+            #match_pattern = temp_domain + '\/wp-(content|include|admin)\/'  # False Negative, because usually '/wp-content' without domain in source
             if not re.search('\/wp-(content|include|admin)\/', source):
                 cmseek.error('Detection was false positive! CMSeeK is quitting!')
                 cmseek.success('Run CMSeeK with {0}{1}{2} argument next time'.format(cmseek.fgreen, '--ignore-cms wp', cmseek.cln))
@@ -104,23 +104,23 @@ def start(id, url, ua, ga, source, detection_method):
         reg_url = usereg[1]
 
         ## Plugins Enumeration
-        plug_enum = wp_plugins_enum.start(source)
+        plug_enum = plugins_enum.start(source)
         plugins_found = plug_enum[0]
         plugins = plug_enum[1]
 
         ## Themes Enumeration
-        theme_enum = wp_theme_enum.start(source,url,ua)
+        theme_enum = theme_enum.start(source,url,ua)
         themes_found = theme_enum[0]
         themes = theme_enum[1]
 
         ## User enumeration
-        uenum = wp_user_enum.start(id, url, ua, ga, source)
+        uenum = user_enum.start(id, url, ua, ga, source)
         usernamesgen = uenum[0]
         usernames = uenum[1]
 
         ## Version Vulnerability Detection
         if version != '0':
-            version_vuln = wp_vuln_scan.start(version, ua)
+            version_vuln = vuln_scan.start(version, ua)
             wpvdbres = version_vuln[0]
             result = version_vuln[1]
             if wpvdbres != '0' and version != '0':
@@ -146,12 +146,12 @@ def start(id, url, ua, ga, source, detection_method):
 
         if readmefile == '1':
             sresult.init_item("Readme file found: " + cmseek.fgreen + url + '/readme.html' + cmseek.cln)
-            cmseek.update_log('wp_readme_file',url + '/readme.html')
+            cmseek.update_log('readme_file',url + '/readme.html')
             item_initiated = True
 
 
         if licfile == '1':
-            cmseek.update_log('wp_license', url + '/license.txt')
+            cmseek.update_log('license', url + '/license.txt')
             if item_initiated == False:
                 sresult.init_item("License file: " + cmseek.fgreen + url + '/license.txt' + cmseek.cln)
             else:
@@ -162,10 +162,10 @@ def start(id, url, ua, ga, source, detection_method):
                 sresult.init_item('Changelog: ' + cmseek.fgreen + str(result['changelog_url']) + cmseek.cln)
             else:
                 sresult.item('Changelog: ' + cmseek.fgreen + str(result['changelog_url']) + cmseek.cln)
-            cmseek.update_log('wp_changelog_file',str(result['changelog_url']))
+            cmseek.update_log('changelog_file',str(result['changelog_url']))
 
         if wpupdir == '1':
-            cmseek.update_log('wp_uploads_directory',url + '/wp-content/uploads')
+            cmseek.update_log('uploads_directory',url + '/wp-content/uploads')
             if item_initiated == False:
                 sresult.init_item("Uploads directory has listing enabled: " + cmseek.fgreen + url + '/wp-content/uploads' + cmseek.cln)
             else:
@@ -211,7 +211,7 @@ def start(id, url, ua, ga, source, detection_method):
                     sresult.sub_item('Plugin: ' + cmseek.bold + cmseek.fgreen + plug[0] + cmseek.cln)
                     sresult.init_subsub('Version: ' + cmseek.bold + cmseek.fgreen + plug[1] + cmseek.cln)
                     sresult.end_subsub('URL: ' + cmseek.fgreen + url + '/wp-content/plugins/' + plug[0] + cmseek.cln)
-            cmseek.update_log('wp_plugins', wpplugs)
+            cmseek.update_log('plugins', wpplugs)
             sresult.empty_item()
 
         if themes_found != 0:
@@ -241,7 +241,7 @@ def start(id, url, ua, ga, source, detection_method):
                     if thmz[1] != '':
                         sresult.subsub('Theme Zip: ' + cmseek.bold + cmseek.fgreen + url + thmz[1] + cmseek.cln)
                     sresult.end_subsub('URL: ' + cmseek.fgreen + url + '/wp-content/themes/' + thm[0] + cmseek.cln)
-            cmseek.update_log('wp_themes', wpthms)
+            cmseek.update_log('themes', wpthms)
             sresult.empty_item()
 
 
@@ -257,16 +257,16 @@ def start(id, url, ua, ga, source, detection_method):
                     sresult.end_sub(cmseek.bold + cmseek.fgreen + u + cmseek.cln)
                 else:
                     sresult.sub_item(cmseek.bold + cmseek.fgreen + u + cmseek.cln)
-            cmseek.update_log('wp_users', wpunames)
+            cmseek.update_log('users', wpunames)
             sresult.empty_item()
 
         if version != '0':
             # cmseek.result("Version: ", version)
-            cmseek.update_log('wp_version', version)
+            cmseek.update_log('version', version)
             if wpvdbres == '1':
                 sresult.end_item('Version vulnerabilities: ' + cmseek.bold + cmseek.fgreen + str(vulnss) + cmseek.cln)
-                cmseek.update_log('wp_vuln_count', str(vulnss))
-                cmseek.update_log("wp_vulns", result, False)
+                cmseek.update_log('vuln_count', str(vulnss))
+                cmseek.update_log("vulns", result, False)
                 if vulnss > 0:
                     for i,vuln in enumerate(result['vulnerabilities']):
                         if i == 0 and i != vulnss - 1:
